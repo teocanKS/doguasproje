@@ -7,12 +7,12 @@ module.exports = {
             env: {
                 NODE_ENV: 'production',
                 PORT: 3001,
-                DB_USER: 'teocan',
-                DB_HOST: 'localhost',
-                DB_NAME: 'dogu_as_db',
-                DB_PASSWORD: 'teocan123',
-                DB_PORT: 5432,
-                JWT_SECRET: 'doguas_secret_key_2024'
+                DB_USER: process.env.DB_USER || 'teocan',
+                DB_HOST: process.env.DB_HOST || 'localhost',
+                DB_NAME: process.env.DB_NAME || 'dogu_as_db',
+                DB_PASSWORD: process.env.DB_PASSWORD,
+                DB_PORT: process.env.DB_PORT || 5432,
+                JWT_SECRET: process.env.JWT_SECRET
             }
         },
         {

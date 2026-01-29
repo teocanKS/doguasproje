@@ -51,13 +51,41 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }));
+const cookieParser = require('cookie-parser');
+const csrf = require('csurf');
+
 app.use(express.json({ limit: '50mb' })); // Increased limit for large payloads
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(cookieParser());
+
+// CSRF Protection
+const csrfProtection = csrf({ cookie: true });
+// Apply CSRF protection to all safe methods, allow token retrieval
+app.use((req, res, next) => {
+    // Exclude /api/csrf-token from having to *provide* a token (it generates one)
+    // Actually csurf ignores GET requests by default, so we just need to use it.
+    next();
+});
 
 // Serve static files from uploads directory
 // Use absolute path to /var/www/doguas/uploads to match system structure
 const path = require('path');
 const uploadsPath = '/var/www/doguas/uploads';
+
+// Route to get CSRF token
+app.get('/api/csrf-token', csrfProtection, (req, res) => {
+    res.json({ csrfToken: req.csrfToken() });
+});
+
+// Apply CSRF protection to all other API routes
+app.use('/api', csrfProtection);
+
+// Middleware to handle CSRF errors
+app.use((err, req, res, next) => {
+    if (err.code !== 'EBADCSRFXTOKEN') return next(err);
+    res.status(403).json({ error: 'Invalid CSRF token' });
+});
+
 app.use('/uploads', (req, res, next) => {
     // Allow embedding in iframes and CORS for PDF.js
     res.removeHeader('X-Frame-Options');

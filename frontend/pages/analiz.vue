@@ -72,7 +72,7 @@
               </div>
               <div>
                 <h3 class="font-bold text-slate-800">{{ insight.title }}</h3>
-                <p class="text-sm text-slate-600 mt-1 leading-relaxed" v-html="insight.message"></p>
+                <p class="text-sm text-slate-600 mt-1 leading-relaxed">{{ insight.message }}</p>
               </div>
             </div>
           </div>

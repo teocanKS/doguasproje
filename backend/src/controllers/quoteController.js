@@ -1,6 +1,26 @@
 const db = require('../config/db');
 const { parseQuoteExcel } = require('../services/excelService');
 const fs = require('fs');
+const path = require('path');
+
+// Safe uploads directory (absolute path)
+const UPLOADS_DIR = path.resolve(__dirname, '../../uploads');
+
+/**
+ * Safely delete a file only if it's within the allowed uploads directory.
+ * Prevents path traversal attacks.
+ */
+const safeUnlinkSync = (filePath) => {
+    if (!filePath) return;
+    const resolvedPath = path.resolve(filePath);
+    if (!resolvedPath.startsWith(UPLOADS_DIR)) {
+        console.error('Path traversal attempt blocked:', filePath);
+        return;
+    }
+    if (fs.existsSync(resolvedPath)) {
+        fs.unlinkSync(resolvedPath);
+    }
+};
 
 const uploadQuote = async (req, res) => {
     try {
@@ -10,8 +30,8 @@ const uploadQuote = async (req, res) => {
 
         const parsedData = parseQuoteExcel(req.file.path);
 
-        // Clean up uploaded file
-        fs.unlinkSync(req.file.path);
+        // Clean up uploaded file (with path validation)
+        safeUnlinkSync(req.file.path);
 
         const { metadata, items } = parsedData;
 
@@ -506,9 +526,9 @@ const createQuoteWithWorkflow = async (req, res) => {
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Create quote workflow error:', error);
-        // Cleanup file if error
-        if (req.file && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
+        // Cleanup file if error (with path validation)
+        if (req.file) {
+            safeUnlinkSync(req.file.path);
         }
         res.status(500).json({ error: 'Teklif oluşturulamadı: ' + error.message });
     } finally {
