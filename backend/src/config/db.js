@@ -1,5 +1,4 @@
-const { Pool } = require('pg');
-const { types } = require('pg');
+const { Pool, types } = require('pg');
 
 // CRITICAL: Configure BigInt parser to return JavaScript numbers
 // This prevents JSON.stringify errors for BIGINT columns (IDs)
@@ -31,6 +30,9 @@ pool.on('error', (err) => {
 const query = async (text, params) => {
     const start = Date.now();
     try {
+        if (typeof text !== 'string') {
+            throw new Error('Database query text must be a string');
+        }
         const res = await pool.query(text, params);
         const duration = Date.now() - start;
         console.log('Executed query', { text, duration, rows: res.rowCount });

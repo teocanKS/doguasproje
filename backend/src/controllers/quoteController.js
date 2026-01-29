@@ -13,13 +13,20 @@ const UPLOADS_DIR = path.resolve(__dirname, '../../uploads');
 const safeUnlinkSync = (filePath) => {
     if (!filePath) return;
     const resolvedPath = path.resolve(filePath);
-    if (!resolvedPath.startsWith(UPLOADS_DIR)) {
+    // START FIX: Path traversal hardening
+    if (!resolvedPath.startsWith(UPLOADS_DIR + path.sep)) {
         console.error('Path traversal attempt blocked:', filePath);
         return;
     }
-    if (fs.existsSync(resolvedPath)) {
+    try {
         fs.unlinkSync(resolvedPath);
+    } catch (err) {
+        // Ignore file not found errors, log others
+        if (err.code !== 'ENOENT') {
+            console.error('Error deleting file:', err.message);
+        }
     }
+    // END FIX
 };
 
 const uploadQuote = async (req, res) => {
